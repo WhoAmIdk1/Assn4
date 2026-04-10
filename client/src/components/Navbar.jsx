@@ -1,46 +1,43 @@
-import { Link, useNavigate, useLocation } from "react-router";
-import { useAuth } from "../hooks/useAuth";
-import logo from "../assets/logo.png";
+import { Link, useNavigate } from 'react-router-dom';
+import { useContext } from 'react';
 
-function Navbar() {
-  const { user, setUser } = useAuth();
+import { AuthContext } from '../contexts/AuthContext'; 
+
+export default function Navbar() {
+  const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
-  const location = useLocation();
 
-  const isAuthPage =
-    location.pathname === "/login" || location.pathname === "/register";
+  const handleLogout = async () => {
+    try {
 
-  async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setUser(null);
-    navigate("/login");
-  }
+      await logout(); 
+      navigate('/');
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  };
 
   return (
     <nav className="navbar">
-      <div className="navbar-brand">
-        <Link to="/"><img src={logo} alt="My App" className="navbar-logo" /></Link>
+      <div className="nav-brand">
+        <Link to="/" className="brand-link">🗳️ Cozy Polls</Link>
       </div>
-      {!isAuthPage && (
-        <div className="navbar-links">
-          <Link to="/">Home</Link>
-          {user ? (
-            <>
-              <span className="navbar-user">Hi, {user.username}</span>
-              <button onClick={handleLogout} className="btn btn-logout">
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login">Login</Link>
-              <Link to="/register">Register</Link>
-            </>
-          )}
-        </div>
-      )}
+      
+      <div className="nav-links">
+        {user ? (
+          <>
+            <span className="welcome-text">Welcome, {user.username}!</span>
+            <Link to="/polls/new" className="nav-link">Create Poll</Link>
+            <Link to="/my-polls" className="nav-link">My Polls</Link>
+            <button onClick={handleLogout} className="btn-logout">Logout</button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className="nav-link">Login</Link>
+            <Link to="/register" className="nav-btn">Register</Link>
+          </>
+        )}
+      </div>
     </nav>
   );
 }
-
-export default Navbar;

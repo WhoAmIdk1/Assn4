@@ -1,4 +1,4 @@
-import db from '../db/connection.js';
+import pool from '../db/connection.js';
 
 // Get all polls with vote counts
 export async function getAll() {
@@ -12,7 +12,7 @@ export async function getAll() {
     GROUP BY p.id, u.username
     ORDER BY p.created_at DESC
   `;
-  const { rows } = await db.query(query);
+  const { rows } = await pool.query(query);
   return rows;
 }
 
@@ -25,7 +25,7 @@ export async function getById(pollId, userId = null) {
     JOIN users u ON p.user_id = u.id 
     WHERE p.id = $1
   `;
-  const { rows: pollRows } = await db.query(pollQuery, [pollId]);
+  const { rows: pollRows } = await pool.query(pollQuery, [pollId]);
   
   if (pollRows.length === 0) return null;
   const poll = pollRows[0];
@@ -39,14 +39,14 @@ export async function getById(pollId, userId = null) {
     GROUP BY o.id
     ORDER BY o.id ASC
   `;
-  const { rows: options } = await db.query(optionsQuery, [pollId]);
+  const { rows: options } = await pool.query(optionsQuery, [pollId]);
   poll.options = options;
 
   // 3. Get the current user's vote (if logged in)
   poll.userVote = null;
   if (userId) {
     const voteQuery = `SELECT option_id FROM votes WHERE poll_id = $1 AND user_id = $2`;
-    const { rows: voteRows } = await db.query(voteQuery, [pollId, userId]);
+    const { rows: voteRows } = await pool.query(voteQuery, [pollId, userId]);
     if (voteRows.length > 0) {
       poll.userVote = voteRows[0].option_id;
     }
@@ -57,7 +57,7 @@ export async function getById(pollId, userId = null) {
 
 // Create a new poll and its options
 export async function create(title, description, allowAnonymous, userId, options) {
-  const client = await db.connect();
+  const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
@@ -88,7 +88,7 @@ export async function create(title, description, allowAnonymous, userId, options
 // Delete a poll (only if user owns it)
 export async function deletePoll(pollId, userId) {
   const query = `DELETE FROM polls WHERE id = $1 AND user_id = $2 RETURNING id`;
-  const { rows } = await db.query(query, [pollId, userId]);
+  const { rows } = await pool.query(query, [pollId, userId]);
   return rows.length > 0;
 }
 
@@ -99,5 +99,5 @@ export async function vote(pollId, optionId, userId) {
     VALUES ($1, $2, $3)
     RETURNING id
   `;
-  await db.query(query, [pollId, optionId, userId]);
+  await pool.query(query, [pollId, optionId, userId]);
 }
