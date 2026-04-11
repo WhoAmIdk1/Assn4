@@ -13,7 +13,7 @@ async function cleantables() {
   try {
     // Create a table to track which migrations have been applied
     await client.query(`
-      DROP TABLE IF EXISTS migrations CASCADE;
+      DROP TABLE IF EXISTS schema_migrations CASCADE;
       DROP TABLE IF EXISTS votes CASCADE;
       DROP TABLE IF EXISTS options CASCADE;
       DROP TABLE IF EXISTS polls CASCADE;
